@@ -1,0 +1,37 @@
+name: Build Windows EXE
+
+# mainブランチに変更があった時と、手動でボタンを押した時に実行されます
+on:
+  push:
+    branches: [ "main" ] 
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest # Windows環境を指定
+
+    steps:
+    - name: コードを取得
+      uses: actions/checkout@v4
+
+    - name: Pythonのセットアップ
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11' # よく使われる安定バージョンを指定
+
+    - name: ライブラリとPyInstallerのインストール
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        # requirements.txtがあればインストール（エラー無視）
+        if (Test-Path requirements.txt) { pip install -r requirements.txt }
+
+    - name: EXE化の実行
+      # GUIアプリ（黒い画面を出したくない）の場合は --noconsole を追加してください
+      run: pyinstaller --onefile main.py
+
+    - name: 完成したEXEファイルをアップロード
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-exe
+        path: dist/main.exe
